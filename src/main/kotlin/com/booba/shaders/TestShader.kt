@@ -71,6 +71,7 @@ class TestShader:ShaderSpec {
 //        glAttachShader(shaderProgram, fragmentShader);
 //        glLinkProgram(shaderProgram);
         createProgram()
+        _isCompiled=true
         return _programId!=null
 //        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 //        glCompileShader(vertexShader);
