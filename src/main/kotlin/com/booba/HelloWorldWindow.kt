@@ -1,10 +1,12 @@
 package com.booba
 
+import com.booba.shaders.ShaderSpec
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.lwjgl.Version
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11
-import org.lwjgl.system.MemoryStack.stackPush
+//import org.lwjgl.opengl.GL11
+import  org.lwjgl.opengl.GL46
+import  org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW.*
@@ -14,6 +16,7 @@ import org.lwjgl.glfw.GLFWErrorCallback
 class HelloWorldWindow(
     private val header:String="NoName",
     private val dimension:Dimension=720 to 480,
+    private val shaderSpec: ShaderSpec
 ) {
     private var window:Long?=null
      val actionMapState:MutableStateFlow<ActionMap> = MutableStateFlow( mapOf(GLFW_KEY_ESCAPE to { _, _->close()}))
@@ -21,7 +24,7 @@ class HelloWorldWindow(
 
     fun run() {
         println("Hello LWJGL " + Version.getVersion() + "!")
-        init()
+        initGl()
         loop()
         window?.let{
             Callbacks.glfwFreeCallbacks(it)
@@ -43,7 +46,8 @@ class HelloWorldWindow(
         }
     }
 
-    private fun init() {
+
+    private fun initGl() {
         // Setup an error callback. The default implementation
         // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set()
@@ -67,7 +71,7 @@ class HelloWorldWindow(
                 actionMapState.value[key]?.invoke(window,key)
             }
         }
-        stackPush().use { stack ->
+        MemStack.stackPush().use { stack ->
             val pWidth = stack.mallocInt(1) // int*
             val pHeight = stack.mallocInt(1) // int*
 
@@ -87,11 +91,19 @@ class HelloWorldWindow(
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window!!)
+
+
         // Enable v-sync
         glfwSwapInterval(1)
 
         // Make the window visible
         glfwShowWindow(window!!)
+
+        GL.createCapabilities()
+
+        shaderSpec.compile().let{res->
+            if(!res) error("Program not created!!")
+        }
     }
 
 
@@ -102,16 +114,15 @@ class HelloWorldWindow(
         // LWJGL detects the context that is current in the current thread,
         // creates the GLCapabilities instance and makes the OpenGL
         // bindings available for use.
-        GL.createCapabilities()
 
         // Set the clear color
-        GL11.glClearColor(1.0f, 0.0f, 0.0f, 0.0f)
+        glClearColor(1.0f, 0.0f, 0.0f, 0.0f)
         //        drawLine();
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
         while (!glfwWindowShouldClose(window!!)) {
 
-            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
+            glClear(GL46.GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             // clear the framebuffer
 //            gl;
 
