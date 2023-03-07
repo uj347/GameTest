@@ -18,8 +18,6 @@ class HelloWorldWindow(
     private val dimension:Dimension=720 to 480,
     private val shaderSpec: ShaderSpec
 ) {
-
-    private val renderState=MutableStateFlow<()->Unit>({})
     private var window:Long?=null
      val actionMapState:MutableStateFlow<ActionMap> = MutableStateFlow( mapOf(GLFW_KEY_ESCAPE to { _, _->close()}))
 
@@ -124,11 +122,10 @@ class HelloWorldWindow(
         // the window or has pressed the ESCAPE key.
         while (!glfwWindowShouldClose(window!!)) {
 
-            glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+            glClear(GL46.GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             // clear the framebuffer
 //            gl;
 
-            renderState.value()
             glfwSwapBuffers(window!!)
             // swap the color buffers
 
