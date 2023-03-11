@@ -2,15 +2,16 @@ package com.booba.shaders
 
 
 import com.booba.MemStack
+import org.lwjgl.opengl.GL20
 import  org.lwjgl.opengl.GL46
 import  org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import  org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil.*
+import withMemStack
 
 
 class TestShader:ShaderSpec {
-
 
     override val vertexShaderString: String ="#version 330 core\n"+
     "layout (location = 0) in vec3 aPos;\n"+
@@ -47,44 +48,41 @@ class TestShader:ShaderSpec {
         _vertexShaderId=glCreateShader(GL_VERTEX_SHADER)
         glShaderSource(_vertexShaderId!!,vertexShaderString)
         glCompileShader(_vertexShaderId!!)
-        MemStack.stackPush().use {memoryStack ->
-            val buf=memoryStack.mallocInt(1)
+        withMemStack {
+            val buf=mallocInt(1)
             glGetShaderiv(_vertexShaderId!!, GL_COMPILE_STATUS,buf)
             val res=buf.get(0)
-            if(res==0) error("Fuck you vertexShader")
+            if(res==0) {
+                val log= glGetShaderInfoLog(_vertexShaderId!!,)
+                error("Fuck you vertexShader: $log")
+            }
         }
 
         _fragmentShaderId=glCreateShader(GL_FRAGMENT_SHADER)
         glShaderSource(_fragmentShaderId!!,fragmentShaderString)
         glCompileShader(_fragmentShaderId!!)
-        MemStack.stackPush().use {memoryStack ->
-            val buf=memoryStack.mallocInt(1)
+        withMemStack {
+            val buf=mallocInt(1)
             glGetShaderiv(_fragmentShaderId!!, GL_COMPILE_STATUS,buf)
             val res=buf.get(0)
-            if(res==0) error("Fuck you fragmentShader")
+            if(res==0) {
+                val log= glGetShaderInfoLog(_fragmentShaderId!!,)
+                error("Fuck you fragmentShader: $log")
+            }
         }
 
-//        unsigned int shaderProgram;
-//        shaderProgram = glCreateProgram();
-
-//        glAttachShader(shaderProgram, vertexShader);
-//        glAttachShader(shaderProgram, fragmentShader);
-//        glLinkProgram(shaderProgram);
         createProgram()
         _isCompiled=true
         return _programId!=null
-//        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-//        glCompileShader(vertexShader);
     }
 
     override fun createProgram(): Int {
         _programId= glCreateProgram()
-
         glAttachShader(_programId!!,_vertexShaderId!!)
         glAttachShader(_programId!!,_fragmentShaderId!!)
         glLinkProgram(_programId!!)
-        MemStack.stackPush().use {memoryStack ->
-            val buf=memoryStack.mallocInt(1)
+        withMemStack{
+            val buf=mallocInt(1)
             glGetProgramiv(_programId!!, GL_LINK_STATUS,buf)
             val res=buf.get(0)
             if(res==0) error("Fuck you programLinking")

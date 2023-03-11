@@ -125,7 +125,6 @@ class HelloWorldWindow(
             glClear(GL46.GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             // clear the framebuffer
 //            gl;
-
             glfwSwapBuffers(window!!)
             // swap the color buffers
 
