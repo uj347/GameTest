@@ -1,9 +1,15 @@
 package com.booba
 /* test */
 import com.booba.objects.ColoredObject2D
+import com.booba.objects.Object2D
 import com.booba.shaders.ResourceShader
 import com.booba.shaders.TestShader
-import org.lwjgl.opengl.GL11.GL_TRIANGLES
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL30.glBindVertexArray
 import org.lwjgl.opengl.GL40
 import org.lwjgl.opengl.GL46
 import java.awt.Color
@@ -21,23 +27,32 @@ fun tryLoadRes(){
 }
 
 fun helloWorld(){
-    val shaderSpec=ResourceShader()
+    val shaderSpec=TestShader()
     val triangle=ColoredObject2D(
         listOf(
-            -0.9f to 0f to Color.YELLOW,
-            0f to 0.9f to Color.YELLOW,
-            0.9f to 0f to Color.YELLOW
+            (-0.9f to 0f) to Color.YELLOW,
+            (0f to 0.9f) to Color.YELLOW,
+            (0.9f to 0f) to Color.YELLOW
         )
     )
     HelloWorldWindow(shaderSpec =shaderSpec ).apply {
-        renderState.value={
-            val vao=triangle.vao
-            GL46.glBindVertexArray(vao)
-            glVertexArra
-            GL46.glDrawArrays(GL_TRIANGLES,0,3)
-            GL46.glBindVertexArray(0)
+        runBlocking {
+            launch(Dispatchers.IO) {
+               delay(5000)
+                renderState.value={
+                    val vao=Object2D.createVao(triangle)
+//            gl
+                    glBindVertexArray(vao)
+                    glDrawArrays(GL_LINES,0,3)
+                    println("Render state invoked!!!")
+//            GL46.glBindVertexArray(0)
+                }
+            }
+            run()
+
         }
-        run()
+
     }
+
 
 }

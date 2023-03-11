@@ -5,7 +5,11 @@ import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 
 fun <T>withMemStack(block:MemoryStack.()->T):T{
-   return MemStack.stackPush().block()
+    val res=
+    MemStack.stackPush().use {
+        it.block()
+    }
+   return res
 }
 
 fun withBuf(size:Int,block:(buf:ByteBuffer)->Unit){

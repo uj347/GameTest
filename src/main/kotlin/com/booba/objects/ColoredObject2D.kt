@@ -11,10 +11,9 @@ class ColoredObject2D(
         VertexDescription2D(it.first,SimpleColor2D(it.second))
     }
 
-    private var _vao:Int?=null
+
     override val vao: Int by lazy {
-        val result=_vao?:createVao().also { _vao=it }
-        result
+        createVao()
     }
 
     override val textureType2D: TextureType2d = TextureType2d.SIMPLE_COLOR

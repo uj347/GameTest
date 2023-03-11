@@ -4,13 +4,15 @@ import com.booba.shaders.ShaderSpec
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.lwjgl.Version
 import org.lwjgl.opengl.GL
-//import org.lwjgl.opengl.GL11
+
 import  org.lwjgl.opengl.GL46
 import  org.lwjgl.opengl.GL46.*
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
+import withMemStack
+import java.awt.Color
 
 
 class HelloWorldWindow(
@@ -93,6 +95,11 @@ class HelloWorldWindow(
         // Make the OpenGL context current
         glfwMakeContextCurrent(window!!)
 
+//        val callBack=object:
+            glfwSetFramebufferSizeCallback(window!!,
+                {window,w,h->
+                    glViewport(0,0,w,h)
+                })
 
         // Enable v-sync
         glfwSwapInterval(1)
@@ -117,7 +124,7 @@ class HelloWorldWindow(
         // bindings available for use.
 
         // Set the clear color
-        glClearColor(1.0f, 0.0f, 0.0f, 0.0f)
+        glClearColor(1.0f, 0.5f, 0.3f, 0.0f)
         //        drawLine();
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
@@ -126,16 +133,43 @@ class HelloWorldWindow(
             glClear(GL46.GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             // clear the framebuffer
 //            gl;
-            if(renderState.value==null) println("Null renderstate")
-            renderState.value?.invoke()
+//            if(renderState.value==null) println("Null renderstate")
+//            renderState.value?.invoke()
             glfwSwapBuffers(window!!)
             // swap the color buffers
+            renderTriangle()
 
             // Poll for window events. The key callback above will only be
             // invoked during this call.
             glfwPollEvents()
         }
     }
+
+    private fun renderTriangle(){
+        val verts=floatArrayOf(0.5f , 0f,0f,
+                                0f , 0.5f,0f,
+                                 0.5f, 0f,0f)
+//         withMemStack {
+        glUseProgram(shaderSpec.programId!!)
+            val buf=MemoryUtil.memAllocFloat(9)
+             buf.put(verts)
+            val vao= glGenVertexArrays()
+            val vbo= glGenBuffers()
+            glBindVertexArray(vao)
+            glBindBuffer(GL_ARRAY_BUFFER,vbo)
+            glBufferData(GL_ARRAY_BUFFER,buf, GL_STATIC_DRAW)
+            val zero=MemoryUtil.memAllocInt(1).apply{put(0)}
+             glEnableVertexAttribArray(0)
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.SIZE_BYTES, zero)
+
+            glBindBuffer(GL_ARRAY_BUFFER,0)
+
+            glDrawArrays( GL_TRIANGLES,0,3)
+//        }
+
+    }
+
+
 
 
 }

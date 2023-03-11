@@ -1,13 +1,8 @@
 package com.booba.shaders
 
 
-import com.booba.MemStack
-import org.lwjgl.opengl.GL20
-import  org.lwjgl.opengl.GL46
+
 import  org.lwjgl.opengl.GL46.*
-import org.lwjgl.system.MemoryUtil
-import  org.lwjgl.opengl.GL46.*
-import org.lwjgl.system.MemoryUtil.*
 import withMemStack
 
 
