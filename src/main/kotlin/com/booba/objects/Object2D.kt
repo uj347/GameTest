@@ -17,10 +17,9 @@ sealed interface Object2D {
     companion object{
         internal fun Object2D.createVao():Int{
 
-            val vaoId=glGenVertexArrays()
-            glBindVertexArray(vaoId)
-
-          val res= withMemStack {
+//            val vaoId=glGenVertexArrays()
+//            glBindVertexArray(vaoId)
+            val res= withMemStack {
                val floatCount=3+4+2
                val bufSize=vertices.size*(floatCount)
                val buf=mallocFloat(bufSize)
@@ -55,7 +54,7 @@ sealed interface Object2D {
                glEnableVertexAttribArray(1)
 
               val int3=mallocInt(1)
-               int1.put((3+4)*Float.SIZE_BYTES)
+               int3.put((3+4)*Float.SIZE_BYTES)
                glVertexAttribPointer(2,2, GL_FLOAT,false,floatCount*Float.SIZE_BYTES,int3)
                glEnableVertexAttribArray(2)
 

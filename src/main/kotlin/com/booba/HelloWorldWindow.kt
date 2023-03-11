@@ -21,6 +21,7 @@ class HelloWorldWindow(
     private var window:Long?=null
      val actionMapState:MutableStateFlow<ActionMap> = MutableStateFlow( mapOf(GLFW_KEY_ESCAPE to { _, _->close()}))
 
+    val renderState= MutableStateFlow<(()->Unit)?>(null)
 
     fun run() {
         println("Hello LWJGL " + Version.getVersion() + "!")
@@ -125,6 +126,8 @@ class HelloWorldWindow(
             glClear(GL46.GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
             // clear the framebuffer
 //            gl;
+            if(renderState.value==null) println("Null renderstate")
+            renderState.value?.invoke()
             glfwSwapBuffers(window!!)
             // swap the color buffers
 
