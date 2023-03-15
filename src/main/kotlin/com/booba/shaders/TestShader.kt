@@ -6,7 +6,16 @@ import  org.lwjgl.opengl.GL46.*
 import withMemStack
 
 
-class TestShader:ShaderSpec {
+class TestShader:ShaderProgramSpec {
+    override val uniforms: List<ShaderProgramSpec.UniformSpec> = listOf()
+
+
+        override fun useProgram() {
+            if(!_isCompiled)compile()
+            if(_programId==null)createProgram()
+            glUseProgram(_programId!!)
+        }
+
 
     override val vertexShaderString: String ="#version 330 core\n"+
     "layout (location = 0) in vec3 aPos;\n"+
@@ -71,7 +80,7 @@ class TestShader:ShaderSpec {
         return _programId!=null
     }
 
-    override fun createProgram(): Int {
+    private fun createProgram(): Int {
         _programId= glCreateProgram()
         glAttachShader(_programId!!,_vertexShaderId!!)
         glAttachShader(_programId!!,_fragmentShaderId!!)

@@ -12,10 +12,12 @@ fun <T>withMemStack(block:MemoryStack.()->T):T{
    return res
 }
 
-fun withBuf(size:Int,block:(buf:ByteBuffer)->Unit){
+fun <T>withBuf(size:Int,block:(buf:ByteBuffer)->T):T{
     val buf=MemoryUtil.memAlloc(size)
-    block(buf)
+   val res= block(buf)
+    buf.clear()
     MemoryUtil.memFree(buf)
+    return res
 }
 
 fun FloatBuffer.put(vararg vals:Float)=put(vals)

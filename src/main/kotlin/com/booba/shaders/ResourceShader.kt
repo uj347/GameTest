@@ -1,17 +1,18 @@
 package com.booba.shaders
 
-import org.lwjgl.opengl.GL20.glAttachShader
-import org.lwjgl.opengl.GL20.glLinkProgram
+import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL46
 import withMemStack
 
-class ResourceShader:ShaderSpec {
+class ResourceShader(
+    override val uniforms: List<ShaderProgramSpec.UniformSpec>
+):ShaderProgramSpec {
 
 
 
 
-    override val vertexShaderString: String by lazy{loadShaderString(SHADER_TYPE.VERTEX)}
-    override val fragmentShaderString: String by lazy{loadShaderString(SHADER_TYPE.FRAGMENT)}
+    override val vertexShaderString: String by lazy{loadShaderString(SHADER_TYPE.VERTEX).also(::println)}
+    override val fragmentShaderString: String by lazy{loadShaderString(SHADER_TYPE.FRAGMENT).also(::println)}
 
     private var _vertexShaderId:Int?=null
     override val vertexShaderId: Int?
@@ -29,6 +30,12 @@ class ResourceShader:ShaderSpec {
     override val isCompiled: Boolean
         get() = _isCompiled
 
+    /**Will compile an create program if not done until invokation of this function */
+    override fun useProgram() {
+        if(!_isCompiled)compile()
+        glUseProgram(_programId!!)
+    }
+
     override fun compile(): Boolean {
         _vertexShaderId= GL46.glCreateShader(GL46.GL_VERTEX_SHADER)
         GL46.glShaderSource(_vertexShaderId!!, vertexShaderString)
@@ -41,6 +48,7 @@ class ResourceShader:ShaderSpec {
                 val log= GL46.glGetShaderInfoLog(_vertexShaderId!!,)
                 error("Fuck you vertexShader: $log")
             }
+
         }
 
         _fragmentShaderId= GL46.glCreateShader(GL46.GL_FRAGMENT_SHADER)
@@ -55,13 +63,12 @@ class ResourceShader:ShaderSpec {
                 error("Fuck you fragmentShader: $log")
             }
         }
-
-        createProgram()
+        _programId=createProgram()
         _isCompiled=true
         return _programId!=null
     }
 
-    override fun createProgram(): Int {
+    private fun createProgram(): Int {
         _programId= GL46.glCreateProgram()
        glAttachShader(_programId!!, _vertexShaderId!!)
         glAttachShader(_programId!!, _fragmentShaderId!!)

@@ -9,11 +9,16 @@ import org.lwjgl.system.MemoryUtil
 import put
 import withMemStack
 
-sealed interface Object2D {
-    val vertices:List<VertexDescription2D>
-    val vao:Int
-    val textureType2D:TextureType2d
-    fun releaseResources()
+ sealed class Object2D {
+    abstract val vertices:List<VertexDescription2D>
+    val vao:Int by lazy {
+        createVao()
+    }
+     val vertexCount
+        get() = vertices.size
+    abstract val textureType2D:TextureType2d
+    abstract fun releaseResources()
+
     companion object{
         fun createVao(obj2d:Object2D):Int=obj2d.createVao()
         internal fun Object2D.createVao():Int{
@@ -34,33 +39,45 @@ sealed interface Object2D {
                            val (r,g,b,a)=arrayOf(color.red/255f,color.green/255f,color.blue/255f,color.alpha/255f)
 //                               arrayOf(1f,1f,1f,0f)
 
-                           buf.put(vDescr.x,vDescr.y,0f)
+                           buf.put(vDescr.x,vDescr.y,1f)
                            buf.put(r,g,b,a)
                            buf.put(0f,0f)
+//
 
                        }
                    }
-                   TextureType2d.TEXTURED-> TODO()
+                   TextureType2d.TEXTURED-> {
+                       vertices.forEach { vDescr->
+
+                           buf.put(vDescr.x,vDescr.y,1f)
+                           buf.put(0f,0f,0f,0f)
+                           with((vDescr.vertexTextureData as Texture2D).textureCoordinates){
+                               buf.put(first,second)
+                           }
+
+                       }
+
+                   }
                }
                //TODO
+
+
+                buf.flip()
                val vao= glGenVertexArrays()
                glBindVertexArray(vao)
                val vbo=glGenBuffers()
                glBindBuffer(GL_ARRAY_BUFFER,vbo)
                glBufferData(GL_ARRAY_BUFFER,buf, GL_DYNAMIC_DRAW)
 
-              val int1=mallocInt(1)
-              int1.put(0*fSize)
+              val int1=(0*fSize).toLong()
                glVertexAttribPointer(0,3, GL_FLOAT,false,floatCount*fSize,int1)
                glEnableVertexAttribArray(0)
 
-              val int2=mallocInt(1)
-               int2.put(3*fSize)
+              val int2=(3*fSize).toLong()
                glVertexAttribPointer(1,4, GL_FLOAT,false,floatCount*fSize,int2)
                glEnableVertexAttribArray(1)
 
-              val int3=mallocInt(1)
-               int3.put((3+4)*fSize)
+              val int3=((3+4)*fSize).toLong()
                glVertexAttribPointer(2,2, GL_FLOAT,false,floatCount*fSize,int3)
                glEnableVertexAttribArray(2)
 

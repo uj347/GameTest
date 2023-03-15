@@ -1,29 +1,33 @@
 package com.booba
 
-import com.booba.shaders.ShaderSpec
+import com.booba.shaders.ShaderProgramSpec
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.lwjgl.Version
-import org.lwjgl.opengl.GL
+//import org.lwjgl.opengl.GL
 
-import  org.lwjgl.opengl.GL46
-import  org.lwjgl.opengl.GL46.*
+import  org.lwjgl.opengl.GL33.*
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
+import org.lwjgl.opengl.GL
+
+import org.lwjgl.system.Configuration
 import withMemStack
-import java.awt.Color
 
 
 class HelloWorldWindow(
     private val header:String="NoName",
     private val dimension:Dimension=720 to 480,
-    private val shaderSpec: ShaderSpec
+    private val shaderSpec: ShaderProgramSpec
 ) {
+
+    private val pressedKeys= mutableSetOf<Int>()
+
     private var window:Long?=null
      val actionMapState:MutableStateFlow<ActionMap> = MutableStateFlow( mapOf(GLFW_KEY_ESCAPE to { _, _->close()}))
 
-    val renderState= MutableStateFlow<(()->Unit)?>(null)
+    val renderState= MutableStateFlow<((Int)->Unit)?>(null)
 
     fun run() {
         println("Hello LWJGL " + Version.getVersion() + "!")
@@ -58,11 +62,16 @@ class HelloWorldWindow(
         // Initialize  Most GLFW functions will not work before doing this.
         check(glfwInit()) { "Unable to initialize GLFW" }
 
-//        glEnable(0);
+
         // Configure GLFW
+
         glfwDefaultWindowHints() // optional, the current window hints are already the default
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE) // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE) // the window will be resizable
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
+
 
         // Create the window
         window = glfwCreateWindow(dimension.first, dimension.second, header, MemoryUtil.NULL, MemoryUtil.NULL)
@@ -70,9 +79,14 @@ class HelloWorldWindow(
 
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
         glfwSetKeyCallback(window!!) { window: Long, key: Int, scancode: Int, action: Int, mods: Int ->
-            if(key in actionMapState.value&&action==GLFW_RELEASE){
-                actionMapState.value[key]?.invoke(window,key)
+            if(key in actionMapState.value&&action== GLFW_PRESS) {
+            pressedKeys.add(key)
             }
+            if(key in actionMapState.value&&action==GLFW_RELEASE){
+               pressedKeys.remove(key)
+            }
+//            actionMapState.value[key]?.invoke(window,key)
+
         }
         MemStack.stackPush().use { stack ->
             val pWidth = stack.mallocInt(1) // int*
@@ -83,6 +97,7 @@ class HelloWorldWindow(
 
             // Get the resolution of the primary monitor
             val vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor())
+"glfw version: ${glfwGetVersionString()} ".let(::println)
 
             // Center the window
             glfwSetWindowPos(
@@ -94,10 +109,15 @@ class HelloWorldWindow(
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window!!)
+        Configuration.DEBUG.set(true)
+        Configuration.DEBUG_STREAM.set(System.out)
+        glfwGetVersionString()
+        GL_CURRENT_COLOR
 
 //        val callBack=object:
             glfwSetFramebufferSizeCallback(window!!,
                 {window,w,h->
+                    println("Window resize callback")
                     glViewport(0,0,w,h)
                 })
 
@@ -107,11 +127,8 @@ class HelloWorldWindow(
         // Make the window visible
         glfwShowWindow(window!!)
 
-        GL.createCapabilities()
 
-        shaderSpec.compile().let{res->
-            if(!res) error("Program not created!!")
-        }
+
     }
 
 
@@ -122,50 +139,76 @@ class HelloWorldWindow(
         // LWJGL detects the context that is current in the current thread,
         // creates the GLCapabilities instance and makes the OpenGL
         // bindings available for use.
+        GL.createCapabilities().apply {
 
+
+            this.OpenGL46.let (::println)
+        }
+
+
+        shaderSpec.compile().let{res->
+            if(!res) error("Program not created!!")
+        }
+
+//        glEnableClientState(GL_VERTEX_ARRAY)
+
+        glDisable(GL_DEPTH_TEST)
         // Set the clear color
-        glClearColor(1.0f, 0.5f, 0.3f, 0.0f)
+
         //        drawLine();
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
+        glUseProgram(shaderSpec.programId!!)
         while (!glfwWindowShouldClose(window!!)) {
 
-            glClear(GL46.GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+            glClear(GL_COLOR_BUFFER_BIT )
+            glClearColor(0f, 0f, 1f, 0.0f)
+//            renderTriangle()
             // clear the framebuffer
 //            gl;
 //            if(renderState.value==null) println("Null renderstate")
-//            renderState.value?.invoke()
+            renderState.value?.invoke(shaderSpec.programId!!)
             glfwSwapBuffers(window!!)
             // swap the color buffers
-            renderTriangle()
 
             // Poll for window events. The key callback above will only be
             // invoked during this call.
             glfwPollEvents()
+            pressedKeys.forEach {key->
+                actionMapState.value[key]?.invoke(window!!,key)
+            }
+
         }
     }
 
     private fun renderTriangle(){
-        val verts=floatArrayOf(0.5f , 0f,0f,
+        val verts=floatArrayOf(0.0f , 0f,0f,
                                 0f , 0.5f,0f,
                                  0.5f, 0f,0f)
-//         withMemStack {
+         withMemStack {
+
         glUseProgram(shaderSpec.programId!!)
-            val buf=MemoryUtil.memAllocFloat(9)
-             buf.put(verts)
+             val data= callocFloat(9)
+//            val data=mallocFloat(9)
+
+             data.put(verts)
+            data.flip()
             val vao= glGenVertexArrays()
-            val vbo= glGenBuffers()
-            glBindVertexArray(vao)
+        glBindVertexArray(vao)
+
+        val vbo= glGenBuffers()
             glBindBuffer(GL_ARRAY_BUFFER,vbo)
-            glBufferData(GL_ARRAY_BUFFER,buf, GL_STATIC_DRAW)
-            val zero=MemoryUtil.memAllocInt(1).apply{put(0)}
+
+            glBufferData(GL_ARRAY_BUFFER,data, GL_STATIC_DRAW)
+//            val zero=mallocInt(1).apply{
+//                put(0)}
              glEnableVertexAttribArray(0)
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.SIZE_BYTES, zero)
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 3*4, 0)
 
             glBindBuffer(GL_ARRAY_BUFFER,0)
 
             glDrawArrays( GL_TRIANGLES,0,3)
-//        }
+        }
 
     }
 
