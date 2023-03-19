@@ -1,6 +1,7 @@
 package com.booba.shaders
 
 
+import org.lwjgl.opengl.GL30
 import org.lwjgl.opengl.GL46.glGetUniformLocation
 
 
@@ -35,3 +36,4 @@ interface ShaderProgramSpec {
 
     }
 }
+

@@ -17,7 +17,8 @@ import withMemStack
      val vertexCount
         get() = vertices.size
     abstract val textureType2D:TextureType2d
-    abstract fun releaseResources()
+    abstract val resourcePreparation:()->Boolean
+    abstract val resourceRelease:()->Boolean
 
     companion object{
         fun createVao(obj2d:Object2D):Int=obj2d.createVao()

@@ -1,23 +1,19 @@
 package com.booba
 /* test */
+import com.booba.animators.InfiniteFloatAnimator
 import com.booba.objects.ColoredObject2D
 import com.booba.objects.TexturedObject2D
-import com.booba.shaders.ResourceShader
-import com.booba.shaders.ShaderProgramSpec
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import com.booba.placeableobject.PlaceableObject2D
+import com.booba.placeableobject.SimplePlaceable2D
+import com.booba.shaders.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import org.joml.Matrix4f
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL11.*
-import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30.*
 import withBuf
 import java.awt.Color
-import java.awt.image.DataBuffer
 import javax.imageio.ImageIO
 import kotlin.io.path.Path
 
@@ -35,11 +31,9 @@ fun tryLoadRes(){
 
 fun helloWorld(){
 
-    val shaderSpec=ResourceShader(
-        listOf(ShaderProgramSpec.UniformSpec(name = "transform",
-            setter = {newVal, pId,location, name ->
-                glUniformMatrix4fv(location,false,newVal as FloatArray)
-            })
+    val shaderSpec=ResourceShaderProgram(
+        listOf(
+            transformMatrixSpec, worldTransformMatrixSpec, cameraTransformMatrixSpec, projectionTransformMatrixSpec
         )
 
     )
@@ -51,8 +45,16 @@ fun helloWorld(){
 
         )
     )
+
+    var texture:Int?=null
+    val prepBloc= { texture=genTexture("C:\\Shared\\GOSPODA.jpg")
+        true
+    }
+    val releaseBlock={ GL11.glDeleteTextures(texture!!)
+        true
+    }
     val triangleTexture=TexturedObject2D(
-        listOf<Pair<DimensionF,DimensionF>>(
+        vertexMapping = listOf<Pair<DimensionF,DimensionF>>(
 //            (-1f to 0f) to (-0.5f to 0f),
 //            (0f to 1f) to (0f to 1f),
 //            (1f to 0f) to (1f to 0f),
@@ -62,72 +64,82 @@ fun helloWorld(){
             (-0.5f to -0.5f) to (0f to 0f),
             (0.5f to 0.5f) to (1f to 1f),
             (0.5f to -0.5f) to (1f to 0f),
-            )
+            ),
+        resourcePreparation = prepBloc,
+        resourceRelease =releaseBlock
     )
 
+    val idMatrix=Matrix4f()
 
-    val idMatrixState:MutableStateFlow<FloatArray> = MutableStateFlow(
-        floatArrayOf(
-            1f,0f,0f,0f,
-            0f,1f,0f,0f,
-            0f,0f,1f,0f,
-            0f,0f,0f,1f
-        )
+    val translationMatrixState = MutableStateFlow(
+      Matrix4f()
     )
+    val placeable=SimplePlaceable2D(
+        triangleTexture,shaderSpec,
+        250f to 250f, 500f to 500f,0f
 
+    )
     val actionMap:ActionMap= mapOf(
         GLFW.GLFW_KEY_LEFT to {_,_,->
-            idMatrixState.transpose(-1f,0f,0.05f)
+            placeable.translate(-10f,0f)
         },
         GLFW.GLFW_KEY_RIGHT to {_,_,->
-            idMatrixState.transpose(1f,0f,0.05f)
+            placeable.translate(10f,0f)
         },
         GLFW.GLFW_KEY_UP to {_,_,->
-            idMatrixState.transpose(0f,1f,0.05f)
+            placeable.translate(0f,10f)
         },
         GLFW.GLFW_KEY_DOWN to {_,_,->
-            idMatrixState.transpose(0f,-1f,0.05f)
-        }
+            placeable.translate(0f,-10f)
+        },
+        GLFW.GLFW_KEY_PAGE_UP to {_,_,->
+            placeable.rotationDegreeState.update { it+5 }
+        },
+        GLFW.GLFW_KEY_PAGE_DOWN to {_,_,->
+            placeable.rotationDegreeState.update { it-5 }
+        },
 
     )
 
+    val objAnimator=InfiniteFloatAnimator(
+        180f,
+        valueGetter = {placeable.rotationDegreeState.value},
+        valueSetter = {newVal->
+            placeable.rotationDegreeState.update { newVal }}
+    )
+    objAnimator.launch()
 
     HelloWorldWindow(shaderSpec =shaderSpec
     ).apply {
         actionMapState.update {
             it+actionMap
         }
-        runBlocking {
 
-            launch(Dispatchers.IO) {
-               delay(1000)
                 renderState.value={programId->
-                shaderSpec.setUniform("transform",idMatrixState.value)
-                val texture=genTexture("C:\\Shared\\GOSPODA.jpg")
-                    glBindVertexArray(triangleTexture.vao)
-                    glDrawArrays(GL_TRIANGLES,0,6)
-                    GL11.glDeleteTextures(texture)
-                    println("Render state invoked!!!")
-//            GL46.glBindVertexArray(0)
+                    listOf(CAMERA_TRANSFORM_LITERAL, PROJECTION_TRANSFORM_LITERAL).forEach {
+                        shaderSpec.setUniform(it,idMatrix)
+                    }
+                    objAnimator.commitTime(System.currentTimeMillis())
+                    placeable.draw()
                 }
-            }
+
+                    println("Render state invoked!!!")
             run()
-        }
 
     }
 
 
 }
 
-fun MutableStateFlow<FloatArray>.transpose(x:Float,y:Float,step:Float){
-    val xInd=3
-    val yInd=7
-    update {
-        val oldX=it[xInd]
-        val oldY=it[yInd]
-        it[xInd]=it[xInd]+step*x
-        it[yInd]=it[yInd]+step*y
-        it.clone()
+fun PlaceableObject2D.translate(x:Float, y:Float){
+    this.coordinatesState.update {old->
+        old.first+x to old.second+y
+    }
+}
+
+fun MutableStateFlow<Matrix4f>.translate(x:Float, y:Float, step:Float){
+    update {m4->
+        Matrix4f(m4.translate(x*step,y*step,0f))
     }
 }
 

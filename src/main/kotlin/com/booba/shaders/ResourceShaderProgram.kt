@@ -4,7 +4,7 @@ import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL46
 import withMemStack
 
-class ResourceShader(
+class ResourceShaderProgram(
     override val uniforms: List<ShaderProgramSpec.UniformSpec>
 ):ShaderProgramSpec {
 

@@ -14,9 +14,6 @@ class ColoredObject2D(
 
     override val textureType2D: TextureType2d = TextureType2d.SIMPLE_COLOR
 
-    override fun releaseResources() {
-        TODO("Not yet implemented")
-    }
-
-
+    override val resourcePreparation: () -> Boolean={true}
+    override val resourceRelease: () -> Boolean={true}
 }
