@@ -1,11 +1,15 @@
+import com.booba.DimensionF
 import com.booba.MemStack
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import org.joml.Matrix4f
 import org.joml.Vector3f
+import org.joml.Vector4f
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.reflect.KProperty
 
 fun <T>withMemStack(block:MemoryStack.()->T):T{
@@ -35,6 +39,8 @@ fun Matrix4f.getFloatValuesByteBuf():ByteBuffer{
 }
 fun Matrix4f.getFloatValuesFloatBuf():FloatBuffer=getFloatValuesByteBuf().asFloatBuffer()
 
+fun DimensionF.toVec4f()=Vector4f(first,second,0f,1f)
+fun Vector4f.toDimensionF()=x to y
 
 fun Vector3f.getFloatValuesByteBuf():ByteBuffer{
     val bbuf=ByteBuffer.allocateDirect(3*Float.SIZE_BYTES)
@@ -46,10 +52,17 @@ fun Vector3f.getFloatValuesFloatBuf():FloatBuffer=getFloatValuesByteBuf().asFloa
 
 
 operator fun <T> MutableStateFlow<T>.getValue(caller:Any?,prop:KProperty<*>):T =  this.value
-operator fun <T> MutableStateFlow<T>.setValue(caller:Any?,prop:KProperty<*>,newValue:T) = {
-    println("Caller: $caller wth prop: ${prop.name} and new val : $newValue")
-    this.value=newValue
+operator fun <T> MutableStateFlow<T>.setValue(caller:Any?,prop:KProperty<*>,newValue:T) {
+    println("Caller: $caller wth prop: \n${prop.name} oldVal is:\n ${this.value} and new val :\n $newValue")
+    value=newValue
 }
+
+
+fun Float.degreeToRads():Float=toDouble().let(Math::toRadians).toFloat()
+
+private val idCounter= AtomicLong(0)
+fun genId():Long=idCounter.getAndIncrement()
+
 
 
 const val dp:Float=0.001f

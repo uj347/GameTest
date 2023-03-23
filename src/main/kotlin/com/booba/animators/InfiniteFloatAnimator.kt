@@ -1,16 +1,14 @@
 package com.booba.animators
 
+import genId
+
 
 class InfiniteFloatAnimator(
-    private val speedUnitPerSec:Float,
     override val valueGetter: () -> Float,
-    override val valueSetter: (Float) -> Unit
+    override val valueSetter: (Float) -> Unit,
+    override val deltaTimeMapper: (Long) -> Float,
+    override val valueAdder: (old: Float, deltaT: Float) -> Float = simpleFloatSummator
+
 ):InfiniteGenericAnimator<Float> (){
-    override val deltaTimeMapper: (Long) -> Float={deltaTime->
-        (deltaTime*0.001f)*speedUnitPerSec
-    }
-    override val valueAdder: (old: Float, deltaT: Float) -> Float=
-        {old, deltaT -> old+deltaT }
-
-
+    override val id: Long=genId()
 }

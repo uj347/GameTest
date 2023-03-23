@@ -14,7 +14,7 @@ val matrix44TransposedValueSetter:(newVal:Any,pId:Int,location:Int,name:String)-
 
 val matrix44ValueSetter:(newVal:Any,pId:Int,location:Int,name:String)->Unit = {newVal, pId,location, name ->
     val cast=newVal as Matrix4f
-    println("Setting new value :${newVal} for $name")
+//    println("Setting new value :${newVal} for $name")
     GL30.glUniformMatrix4fv(location, false, cast.getFloatValuesFloatBuf())
 }
 
