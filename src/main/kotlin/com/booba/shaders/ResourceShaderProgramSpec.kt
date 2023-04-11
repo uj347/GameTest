@@ -4,27 +4,36 @@ import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL46
 import withMemStack
 
-class ResourceShaderProgram(
+class ResourceShaderProgramSpec(
+    val vertexShaderFileName:String,
+    val fragmentShaderFileName:String,
     override val uniforms: List<ShaderProgramSpec.UniformSpec>
 ):ShaderProgramSpec {
 
 
 
 
-    override val vertexShaderString: String by lazy{loadShaderString(SHADER_TYPE.VERTEX).also(::println)}
-    override val fragmentShaderString: String by lazy{loadShaderString(SHADER_TYPE.FRAGMENT).also(::println)}
+    override val vertexShaderString: String by lazy{loadShaderString(vertexShaderFileName).also(::println)}
+    override val fragmentShaderString: String by lazy{loadShaderString(fragmentShaderFileName).also(::println)}
 
     private var _vertexShaderId:Int?=null
-    override val vertexShaderId: Int?
-        get() = _vertexShaderId
+    override val vertexShaderId: Int by lazy{
+        programId
+        _vertexShaderId!!
+    }
+
 
     private var _fragmentShaderId:Int?=null
-    override val fragmentShaderId: Int?
-        get() =_fragmentShaderId
+    override val fragmentShaderId: Int by lazy {
+        programId
+        _fragmentShaderId!!
+    }
 
-    private var _programId:Int?=null
-    override val programId: Int?
-        get() = _programId
+    var _programId:Int?=null
+    override val programId: Int by lazy {
+        compile()
+        createProgram()
+    }
 
     private var _isCompiled=false
     override val isCompiled: Boolean
@@ -77,7 +86,10 @@ class ResourceShaderProgram(
             val buf=mallocInt(1)
             GL46.glGetProgramiv(_programId!!, GL46.GL_LINK_STATUS, buf)
             val res=buf.get(0)
-            if(res==0) error("Fuck you programLinking")
+            if(res==0) {
+                val log= GL46.glGetProgramInfoLog(_programId!!,)
+                error("Fuck you programLinking:\n $log")
+            }
         }
         return _programId!!
     }
@@ -85,18 +97,15 @@ class ResourceShaderProgram(
 
 
         companion object{
-            private fun loadShaderString(type:SHADER_TYPE):String{
+            private fun loadShaderString(resFileName:String):String{
                 return ClassLoader
-                    .getSystemResource(type.resPath)
+                    .getSystemResource(resFileName)
                     .openStream()
                     .bufferedReader()
                     .readText()
             }
 
         }
-    private enum class SHADER_TYPE(val resPath:String) {
-        VERTEX("VERTEX_SHADER"),FRAGMENT("FRAGMENT_SHADER")
-    }
 
 
 }

@@ -19,7 +19,7 @@ import withMemStack
 class HelloWorldWindow(
     private val header:String="NoName",
     private val dimension:Dimension=720 to 480,
-    private val shaderSpec: ShaderProgramSpec
+//    private val shaderSpec: ShaderProgramSpec
 ) {
 
     private val pressedKeys= mutableSetOf<Int>()
@@ -27,7 +27,7 @@ class HelloWorldWindow(
     private var window:Long?=null
      val actionMapState:MutableStateFlow<ActionMap> = MutableStateFlow( mapOf(GLFW_KEY_ESCAPE to { _, _->close()}))
 
-    val renderState= MutableStateFlow<((Int)->Unit)?>(null)
+    val renderState= MutableStateFlow<(()->Unit)?>(null)
 
     fun run() {
         println("Hello LWJGL " + Version.getVersion() + "!")
@@ -145,29 +145,31 @@ class HelloWorldWindow(
             this.OpenGL46.let (::println)
         }
 
-
-        shaderSpec.compile().let{res->
-            if(!res) error("Program not created!!")
-        }
+//
+//        shaderSpec.compile().let{res->
+//            if(!res) error("Program not created!!")
+//        }
 
 //        glEnableClientState(GL_VERTEX_ARRAY)
 
         glDisable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         // Set the clear color
 
         //        drawLine();
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
-        glUseProgram(shaderSpec.programId!!)
+//        glUseProgram(shaderSpec.programId!!)
         while (!glfwWindowShouldClose(window!!)) {
 
             glClear(GL_COLOR_BUFFER_BIT )
-            glClearColor(0f, 0f, 1f, 0.0f)
+            glClearColor(0f, 0f, 0.5f, 0.0f)
 //            renderTriangle()
             // clear the framebuffer
 //            gl;
 //            if(renderState.value==null) println("Null renderstate")
-            renderState.value?.invoke(shaderSpec.programId!!)
+            renderState.value?.invoke()
             glfwSwapBuffers(window!!)
             // swap the color buffers
 
@@ -181,36 +183,7 @@ class HelloWorldWindow(
         }
     }
 
-    private fun renderTriangle(){
-        val verts=floatArrayOf(0.0f , 0f,0f,
-                                0f , 0.5f,0f,
-                                 0.5f, 0f,0f)
-         withMemStack {
 
-        glUseProgram(shaderSpec.programId!!)
-             val data= callocFloat(9)
-//            val data=mallocFloat(9)
-
-             data.put(verts)
-            data.flip()
-            val vao= glGenVertexArrays()
-        glBindVertexArray(vao)
-
-        val vbo= glGenBuffers()
-            glBindBuffer(GL_ARRAY_BUFFER,vbo)
-
-            glBufferData(GL_ARRAY_BUFFER,data, GL_STATIC_DRAW)
-//            val zero=mallocInt(1).apply{
-//                put(0)}
-             glEnableVertexAttribArray(0)
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 3*4, 0)
-
-            glBindBuffer(GL_ARRAY_BUFFER,0)
-
-            glDrawArrays( GL_TRIANGLES,0,3)
-        }
-
-    }
 
 
 

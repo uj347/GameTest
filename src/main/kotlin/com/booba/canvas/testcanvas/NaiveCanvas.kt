@@ -3,10 +3,10 @@ package com.booba.canvas.testcanvas
 import com.booba.animators.AnimatorHolder
 import com.booba.animators.AnimatorTarget
 import com.booba.canvas.Canvas
+import com.booba.canvasobjects.Drawable
 import com.booba.interactable.Interactable
 import com.booba.interactable.Interaction
-import com.booba.placeable.Placeable
-import com.booba.placeable.PlaceableObject2D
+import com.booba.canvasobjects.Placeable
 import getValue
 import kotlinx.coroutines.flow.MutableStateFlow
 import setValue
@@ -15,14 +15,20 @@ import setValue
 class NaiveCanvas: Canvas,AnimatorHolder by AnimatorRegistry() {
 
     override fun drawFrame(currentTime: Long) {
-        commitTime(currentTime)
+        //As animator holder
+        this.commitTime(currentTime)
+        //Run this canvas interactions
+        val interactiblePlaceables=_placeables.filterIsInstance<Interactable>().filter { it.isInteractable }
+        interactiblePlaceables.forEach { it.interact(interactiblePlaceables-it+this) }
         interact(
-            _placeables.filterIsInstance<Interactable>()
+            interactiblePlaceables
         )
         _placeables
-            .filterIsInstance<PlaceableObject2D>()
+            .filterIsInstance<Drawable>()
             .forEach {it.draw(currentTime) }
+
     }
+
 
     override fun addPlaceable(placeable: Placeable) {
         _placeables.add(placeable)

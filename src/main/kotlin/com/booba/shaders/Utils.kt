@@ -1,6 +1,6 @@
 package com.booba.shaders
 
-import getFloatValuesByteBuf
+
 import getFloatValuesFloatBuf
 import org.joml.Matrix4f
 import org.joml.Vector3f
@@ -24,6 +24,11 @@ val vector3fValueSetter:(newVal:Any,pId:Int,location:Int,name:String)->Unit = {n
     GL30.glUniform3fv(location,  cast.getFloatValuesFloatBuf())
 }
 
+val intSetter:(newVal:Any,pId:Int,location:Int,name:String)->Unit = {newVal, pId,location, name ->
+    val cast=newVal as Int
+    GL30.glUniform1ui(location,  cast)
+}
+
 
 const val TRANSFORM_LITERAL="transform"
 val transformMatrixSpec=ShaderProgramSpec.UniformSpec(name = TRANSFORM_LITERAL, setter = matrix44ValueSetter)
@@ -36,5 +41,11 @@ val cameraTransformMatrixSpec=ShaderProgramSpec.UniformSpec(name = CAMERA_TRANSF
 
 const val PROJECTION_TRANSFORM_LITERAL="projectionTransform"
 val projectionTransformMatrixSpec=ShaderProgramSpec.UniformSpec(name = PROJECTION_TRANSFORM_LITERAL, setter = matrix44ValueSetter)
+
+const val ALPHA_MASK_TEXTURE="alphaMask"
+val alphaMaskMatrixSpec=ShaderProgramSpec.UniformSpec(name = ALPHA_MASK_TEXTURE, setter = intSetter)
+
+const val TEXTURE_2D_TEXTURE="texture2D"
+val texture2dTextureSpec=ShaderProgramSpec.UniformSpec(name = TEXTURE_2D_TEXTURE, setter = intSetter)
 
 

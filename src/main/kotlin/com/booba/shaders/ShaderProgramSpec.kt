@@ -8,9 +8,9 @@ import org.lwjgl.opengl.GL46.glGetUniformLocation
 interface ShaderProgramSpec {
     val vertexShaderString:String
     val fragmentShaderString:String
-    val vertexShaderId:Int?
-    val fragmentShaderId:Int?
-    val programId:Int?
+    val vertexShaderId:Int
+    val fragmentShaderId:Int
+    val programId:Int
     val uniforms:List<UniformSpec>
 
     val isCompiled:Boolean

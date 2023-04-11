@@ -1,7 +1,6 @@
-package com.booba.placeable
+package com.booba.canvasobjects
 
 import com.booba.DimensionF
-import com.booba.animators.Animator
 import com.booba.canvas.Canvas
 import kotlinx.coroutines.flow.MutableStateFlow
 

@@ -1,33 +1,44 @@
-package com.booba.placeable
+package com.booba.canvasobjects
 
 import com.booba.DimensionF
 import com.booba.animators.Animator
 import com.booba.animators.AnimatorHolder
 import com.booba.animators.AnimatorTarget
 import com.booba.canvas.Canvas
+import com.booba.hitboxes.Hitbox
+import com.booba.hitboxes.HitboxHolder
 import com.booba.interactable.Interactable
-import com.booba.objects.Object2D
+import com.booba.vertexdata.Object2DVertexData
 import com.booba.shaders.ShaderProgramSpec
+import com.booba.textures.TextureDescription
 import getValue
 import kotlinx.coroutines.flow.MutableStateFlow
 import setValue
 
 
 abstract class PlaceableObject2D (
-    object2D: Object2D,
+    initObject2D: Object2DVertexData,
+    initTextureData:Lazy<List<TextureDescription>>,
     initProgram:ShaderProgramSpec,
     initDimension:DimensionF,
     initCoordinates: DimensionF,
-    initRotationDegree:Float
-        ):Placeable,Interactable,AnimatorTarget {
+    initRotationDegree:Float,
+    initHitboxes: List<Hitbox>
+        ):Placeable,Interactable,Drawable,AnimatorTarget,HitboxHolder {
 
-    val shaderProgramState: MutableStateFlow<ShaderProgramSpec> = MutableStateFlow(initProgram)
-    var shaderProgram: ShaderProgramSpec by shaderProgramState
-
-    val object2DState: MutableStateFlow<Object2D> = MutableStateFlow(object2D)
-    var object2D: Object2D by object2DState
+    val textureDataState: MutableStateFlow<Lazy<List<TextureDescription>>> = MutableStateFlow(initTextureData)
+    var textureData: Lazy<List<TextureDescription>> by textureDataState
 
 
+
+    val object2DState: MutableStateFlow<Object2DVertexData> = MutableStateFlow(initObject2D)
+    var object2D: Object2DVertexData by object2DState
+
+    val hitboxState: MutableStateFlow<List<Hitbox>> = MutableStateFlow(initHitboxes)
+    override val hitboxes: List<Hitbox> by hitboxState
+
+    override val shaderProgramState: MutableStateFlow<ShaderProgramSpec> = MutableStateFlow(initProgram)
+    override var shaderProgram: ShaderProgramSpec by shaderProgramState
     override val rotationDegreeState: MutableStateFlow<Float> = MutableStateFlow(initRotationDegree)
     override var rotationDegree:Float by rotationDegreeState
     override val coordinatesState: MutableStateFlow<DimensionF> = MutableStateFlow(initCoordinates)
@@ -35,7 +46,7 @@ abstract class PlaceableObject2D (
     override val dimensionsState: MutableStateFlow<DimensionF> = MutableStateFlow(initDimension)
     override var dimensions:DimensionF by dimensionsState
 
-    abstract fun draw(currentTime:Long)
+
 
     override fun placeOn(canvas: Canvas) {
         canvas.addPlaceable(this)
